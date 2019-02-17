@@ -1,0 +1,89 @@
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlButton;
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+
+public class GoogleSearchJava {
+
+	public static final String GOOGLE_SEARCH_URL = "https://www.google.com/search";
+
+	public static void main(String[] args) throws IOException {
+		ArrayList<String> list = new ArrayList<>();
+		  String ranking[]= {"1.", "2."};
+		Scanner scanner = new Scanner(System.in);
+		System.out.println("Please enter the search term.");
+		String searchTerm = scanner.nextLine();
+		scanner.close();
+//Search Query displays title pages and urls
+		String searchURL = GOOGLE_SEARCH_URL + "?q=" + searchTerm + "&num=1";
+
+		Document firstLink = Jsoup.connect(searchURL).userAgent("Mozilla/5.0").timeout(500000000).get();
+
+		Elements results = firstLink.select("h3.r > a");
+		int i = 0;
+		for (Element result : results) {
+			String linkHref = result.attr("href");
+			String linkText = result.text();
+			i++;
+			String urls = linkHref.substring(7, linkHref.indexOf("&"));
+			// System.out.println(i + ". Title Page= " + linkText + "\nURL= " + urls +
+			// "\n");
+
+		}
+//get total number of results
+		WebClient webClient = new WebClient(BrowserVersion.CHROME);
+		webClient.getOptions().setJavaScriptEnabled(false);
+		webClient.getOptions().setCssEnabled(false);
+		webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
+		webClient.getOptions().setThrowExceptionOnScriptError(false);
+
+		HtmlPage page = webClient.getPage("https://google.com/");
+
+		// Getting Form from google home page. tsf is the form name
+		HtmlForm form = page.getHtmlElementById("tsf");
+
+		for (int j = 0; j < 1; j++) {
+
+			form.getInputByName("q").setValueAttribute(searchTerm);
+
+			// Creating a virtual submit button
+			HtmlButton submitButton = (HtmlButton) page.createElement("button");
+			submitButton.setAttribute("type", "submit");
+			form.appendChild(submitButton);
+
+			// Submitting the form and getting the result
+			HtmlPage newPage = submitButton.click();
+
+			// Getting the result as text
+			String pageText = newPage.asText();
+			String result[] = pageText.split("\n");
+
+			for (int n = 0; n < result.length; n++) {
+				if (result[n].contains("About") && result[n].contains("results"))
+					System.out.println(result[n]);
+			}
+//crawling the page
+			for (Element innerPage : results) {
+				String linkHref = innerPage.attr("href");
+				String linkText = innerPage.text();
+				String urls = linkHref.substring(7, linkHref.indexOf("&"));
+				String html = Jsoup.connect(urls).get().html();
+				if(html.contains("1.")) {
+					System.out.println(html.(ranking));
+				}
+		}
+	}
+	}
+}
